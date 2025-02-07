@@ -10,7 +10,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <!-- Custom Styles -->
   <style>
     body {
       font-family: 'Poppins', sans-serif;
@@ -26,39 +25,28 @@
       margin: 0;
       padding: 20px;
     }
-
     @keyframes gradientAnimation {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
-
     .container {
       max-width: 600px;
       width: 100%;
     }
-
     .card {
       border: none;
       border-radius: 15px;
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-    }
-
     .card-title {
       font-size: 1.8rem;
       font-weight: bold;
       text-align: center;
       color: #ffffff;
     }
-
     .form-control {
       background: rgba(255, 255, 255, 0.2);
       border: none;
@@ -66,17 +54,9 @@
       border-radius: 10px;
       padding: 12px;
     }
-
     .form-control::placeholder {
       color: rgba(255, 255, 255, 0.7);
     }
-
-    .form-control:focus {
-      background: rgba(255, 255, 255, 0.3);
-      box-shadow: none;
-      color: #ffffff;
-    }
-
     .btn-primary {
       background: linear-gradient(135deg, #6a11cb, #2575fc);
       border: none;
@@ -86,52 +66,20 @@
       font-weight: bold;
       color: #ffffff;
     }
-
     .btn-primary:hover {
       transform: translateY(-3px);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
     }
-
-    #result-text {
-      font-size: 1rem;
-      margin: 20px 0;
-    }
-
     .result-item {
       margin-bottom: 10px;
       padding: 10px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
-      transition: background 0.3s ease;
     }
-
-    .result-item:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .result-item a {
-      text-decoration: none;
-      color: #ffdd57; /* Warna kuning emas */
-      font-weight: bold;
-    }
-
-    .result-item a:hover {
-      color: #ffffff;
-    }
-
-    .result-count {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: #ffdd57;
-      margin-top: 10px;
-      text-align: center;
-    }
-
   </style>
 </head>
 <body>
 
-  <!-- Main Section -->
   <div class="container">
     <div class="card shadow animate__animated animate__fadeIn">
       <div class="card-body">
@@ -148,65 +96,62 @@
       </div>
     </div>
 
-    <!-- Result Section -->
     <div class="card shadow mt-4 d-none animate__animated animate__fadeIn" id="result-card">
       <div class="card-body">
         <h5 class="card-title text-center">Hasil Scanning</h5>
-        <div id="result-text">
-          <!-- Hasil akan diisi oleh JavaScript -->
-        </div>
-        <div id="result-count"></div>
+        <div id="result-text"></div>
       </div>
     </div>
   </div>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
   <script>
     document.getElementById('portScannerForm').addEventListener('submit', async function(event) {
       event.preventDefault();
       const ip = document.getElementById('ipInput').value.trim();
       const resultCard = document.getElementById('result-card');
       const resultText = document.getElementById('result-text');
-      const resultCount = document.getElementById('result-count');
 
       // Reset tampilan
       resultCard.classList.add('d-none');
       resultText.innerHTML = `<p class="text-center">Memproses...</p>`;
-      resultCount.textContent = '';
 
-      const ports = [21, 22, 23, 25, 53, 80, 110, 115, 135, 139, 143, 194, 443, 445, 1433, 3306, 3389, 5632, 5900, 25565];
+      // Daftar port yang akan di-scan
+      const ports = [21, 22, 23, 25, 53, 80, 110, 143, 443, 3306, 3389];
+      let openPorts = [];
 
-      try {
-        let openPorts = [];
-        for (const port of ports) {
-          const response = await fetch(`https://api.hackertarget.com/nmap/?q=${ip}&ports=${port}`);
-          const data = await response.text();
-          if (data.includes(`${port}/tcp open`)) {
-            openPorts.push(port);
-          }
-        }
-
-        if (openPorts.length > 0) {
-          let html = `<ul class="list-group">`;
-          openPorts.forEach(port => {
-            html += `
-              <li class="list-group-item result-item">
-                <span>Port ${port} terbuka</span>
-              </li>`;
-          });
-          html += `</ul>`;
-          resultText.innerHTML = html;
-          resultCount.textContent = `Ditemukan: ${openPorts.length} port terbuka`;
-        } else {
-          resultText.innerHTML = '<div class="alert alert-warning">Tidak ada port terbuka ditemukan.</div>';
-        }
-
-        resultCard.classList.remove('d-none');
-      } catch (error) {
-        resultText.innerHTML = '<div class="alert alert-danger">Gagal mengambil data.</div>';
+      for (const port of ports) {
+        const isOpen = await scanPort(ip, port);
+        if (isOpen) openPorts.push(port);
       }
+
+      // Menampilkan hasil
+      if (openPorts.length > 0) {
+        let html = `<ul class="list-group">`;
+        openPorts.forEach(port => {
+          html += `<li class="list-group-item result-item">Port ${port} terbuka</li>`;
+        });
+        html += `</ul>`;
+        resultText.innerHTML = html;
+      } else {
+        resultText.innerHTML = '<div class="alert alert-warning">Tidak ada port terbuka ditemukan.</div>';
+      }
+
+      resultCard.classList.remove('d-none');
     });
+
+    async function scanPort(ip, port) {
+      return new Promise((resolve) => {
+        const socket = new WebSocket(`ws://${ip}:${port}`);
+        socket.onerror = () => resolve(false); // Port tertutup
+        socket.onopen = () => {
+          resolve(true); // Port terbuka
+          socket.close();
+        };
+      });
+    }
   </script>
 
 </body>
