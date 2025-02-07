@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check Lokasi IP</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Custom CSS -->
+  <style>
+    /* Custom Styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #6a11cb, #2575fc, #6a11cb, #2575fc);
+      background-size: 300% 300%;
+      animation: gradientAnimation 10s ease infinite;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+
+    @keyframes gradientAnimation {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .card {
+      border: none;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 1.8rem;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .form-control {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: #fff;
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .form-control::placeholder {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .form-control:focus {
+      background: rgba(255, 255, 255, 0.3);
+      box-shadow: none;
+      color: #fff;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #6a11cb, #2575fc);
+      border: none;
+      padding: 12px 20px;
+      border-radius: 10px;
+      width: 100%;
+      font-weight: bold;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    #result-text {
+      font-size: 1rem;
+      margin: 20px 0;
+    }
+
+    .result-item {
+      margin-bottom: 10px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      transition: background 0.3s ease;
+    }
+
+    .result-item:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .result-item strong {
+      display: inline-block;
+      width: 150px;
+      color: #ffdd57;
+    }
+
+    .result-item span {
+      color: #fff;
+    }
+
+    .animate__animated {
+      animation-duration: 1s;
+    }
+  </style>
+</head>
+<body>
+  <!-- Main Section -->
+  <div class="container">
+    <!-- Form Section -->
+    <div class="card shadow animate__animated animate__fadeIn">
+      <div class="card-body">
+        <h5 class="card-title">Cek Lokasi IP</h5>
+        <form id="ip-form">
+          <div class="mb-3">
+            <label for="ip-input" class="form-label">Masukkan Alamat IP</label>
+            <input type="text" class="form-control" id="ip-input" placeholder="Contoh: 8.8.8.8" required>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i> Cari Lokasi
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Result Section -->
+    <div class="card shadow mt-4 d-none animate__animated animate__fadeIn" id="result-card">
+      <div class="card-body">
+        <h5 class="card-title text-center">Hasil Lokasi IP</h5>
+        <div id="result-text">
+          <!-- Hasil akan diisi oleh JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS and dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+  <!-- Font Awesome -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+  <!-- Custom JS -->
+  <script>
+    // Fungsi untuk mengambil lokasi IP
+    async function getIPLocation(ip) {
+      try {
+        const response = await fetch(`https://ipapi.co/${ip}/json/`);
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.reason);
+        }
+        return data;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    // Fungsi untuk menampilkan hasil
+    function displayResult(data) {
+      const resultText = document.getElementById('result-text');
+      if (!data) {
+        resultText.innerHTML = `<p class="text-center text-danger">Gagal mengambil data lokasi. Pastikan IP valid.</p>`;
+        return;
+      }
+
+      const resultHTML = `
+        <div class="result-item"><strong>IP Address</strong> <span>${data.ip}</span></div>
+        <div class="result-item"><strong>City</strong> <span>${data.city}</span></div>
+        <div class="result-item"><strong>Region</strong> <span>${data.region}</span></div>
+        <div class="result-item"><strong>Country</strong> <span>${data.country} | ${data.country_name}</span></div>
+        <div class="result-item"><strong>Postal Code</strong> <span>${data.postal}</span></div>
+        <div class="result-item"><strong>European Union</strong> <span>${data.in_eu ? 'true' : 'false'}</span></div>
+        <div class="result-item"><strong>Latitude / Longitude</strong> <span>${data.latitude}, ${data.longitude}</span></div>
+        <div class="result-item"><strong>Time Zone</strong> <span>${data.timezone}</span></div>
+        <div class="result-item"><strong>Calling Code</strong> <span>${data.country_calling_code}</span></div>
+        <div class="result-item"><strong>Currency</strong> <span>${data.currency}</span></div>
+        <div class="result-item"><strong>Languages</strong> <span>${data.languages}</span></div>
+        <div class="result-item"><strong>ASN</strong> <span>${data.asn}</span></div>
+        <div class="result-item"><strong>Org</strong> <span>${data.org}</span></div>
+      `;
+      resultText.innerHTML = resultHTML;
+    }
+
+    // Event listener untuk form
+    document.getElementById('ip-form').addEventListener('submit', async (e) => {
+      e.preventDefault(); // Mencegah form submit default
+      const ip = document.getElementById('ip-input').value.trim();
+
+      // Tampilkan loading state
+      const resultCard = document.getElementById('result-card');
+      const resultText = document.getElementById('result-text');
+      resultCard.classList.add('d-none');
+      resultText.innerHTML = `<p class="text-center">Memproses...</p>`;
+
+      // Ambil lokasi IP
+      const data = await getIPLocation(ip);
+
+      // Tampilkan hasil
+      displayResult(data);
+      resultCard.classList.remove('d-none');
+      resultCard.classList.add('animate__fadeIn');
+    });
+  </script>
+</body>
+</html>
